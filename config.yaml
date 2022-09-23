@@ -1,0 +1,102 @@
+serve:
+  host: <pihole host name>
+  http: 8080
+  tftp: 69
+  datadir: /static
+inventory:
+  12:23:45:56:78:93:	hogsmead1	 
+  12:23:45:56:78:9B:	hogsmead2	 
+  12:23:45:56:78:9E:	hogsmead3	 
+  12:23:45:56:78:95:	hogsmead4	 
+  12:23:45:56:78:97:	hogsmead5
+passwordhash: # `apt-get install whois && mkpasswd <password>`
+bootmenu: |
+  DEFAULT install
+  LABEL install
+      KERNEL http://{{.Server}}:{{.HttpPort}}/static/efi64/vmlinuz
+      INITRD http://{{.Server}}:{{.HttpPort}}/static/efi64/initrd
+      APPEND root=/dev/ram0 ramdisk_size=1500000 ip=dhcp url=http://{{.Server}}:{{.HttpPort}}/static/ubuntu-22.04.1-live-server-amd64.iso autoinstall ds=nocloud-net;s=http://{{.Server}}:{{.HttpPort}}/autoinstall/{{.Hostname}}/ cloud-config-url=/dev/null
+cloudinit: |
+  #cloud-config
+  autoinstall:
+    updates: security
+    version: 1
+    reporting:
+      hook:
+        type: webhook
+        endpoint: http://{{.Server}}:{{.HttpPort}}/cloudlog/{{.Hostname}}
+    apt:
+      disable_components: []
+      geoip: true
+      preserve_sources_list: false
+      primary:
+      - arches:
+        - amd64
+        - i386
+        uri: http://{{.Server}}:3142/ubuntu
+      - arches:
+        - default
+        uri: http://{{.Server}}:3142/ubuntu
+    drivers:
+      install: false
+    identity:
+      hostname: {{.Hostname}}
+      password: {{.PasswordHash}}
+      realname: vpaprots
+      username: vpaprots
+    kernel:
+      package: linux-generic
+    keyboard:
+      layout: us
+      toggle: null
+      variant: ''
+    locale: en_US.UTF-8
+    network:
+      ethernets:
+        enp0s31f6:
+          critical: true
+          dhcp-identifier: mac
+          dhcp4: true
+          nameservers:
+            addresses:
+            - 192.168.1.3
+            search:
+            - papro.ca
+      version: 2
+    ssh:
+      allow-pw: false
+      authorized-keys:
+      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC6Q9jMTJVw00KoFxcF0un7hPxEGF3E1OVHKcWZorWb0qMhRCcJdglyq8W/z9zgx7LoaivGHaZt/H3C6VYa48py4NNWVvp84tS/QzwDMbruz2qD+XjSv8gOs0L9YuJdPHCWq8knuokQq04rRSZlU5b7Pqgoj0z8+prbMHaAQjLoIDT+sE3bmFtKp5iKj6hTe2WbOiqXyOU8cdMpfnAxqy6iY+LEwQG3uLsQovXbCbjWs///0Psv7+OyCUwS6UhjGbjfWOKwIKDR3if6OH08o22Jazv1eyQM8HD8dgS1FhEM1GqdXz5O3lhZ+/bBOn4xBTyV+O7yFW7kF4VTXeo/mcXwkiY4Ppj4fZU/bRCJkmaHyvd3DPt/a6Ti+xiO5FjXJUuODKMcdk3H7lYh4vooAa6LTQJzE0SYGvgKQPSE2wmJID3N7ANwyEUhUKqeWjl7i/mwmSV/OBc6aTSwovFuE4+HUOEcZqgJPsZnfPqllJMunSmy1ouG5y2yGnO+rpIbT4InX+uTZIoji5xiXTqx63rxkYeTtAW539uMzCIzC19LWZwoF9wpI67rrUZQtQh9mrauZyCzgXwfbWt1LgbjnIkJLxT8gH8xbDFWrHAzmMHz/OKDTVoEZWJft9XtONfcdNGnWfuFo5i+BZ+zxYNd5cuVW7bbSgt85V+WgHNs21cVCQ==
+        vpaprots@github/71163033 # ssh-import-id gh:vpaprots'
+      - ''
+      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCk5/1mdjEfD66hAtF2jYpmcLpAlbQr/Ic/MaLKX8IDW++vVa52bC7R9zdDGaP+HMhcaFlhqgKxdOhPjv5TFfVyV+EgjtCJyBgVMBILDSHluxsxp0iSJGGcrfNAJIyu6JTQUe2KbUCs+nJrkEZgRjEI1OcfNOtai1YbVzlss2nn6tg38kRy/A1DZAz/+CFhavzvTlNYFH07zjW7p1OVgFgBW986YS2hLNIX582vt9LcfQwBzGK10Zuf6s4GQcQZ7c9bLCfob+g6KezYShxwI4A3FoFkDXJe6Ique5oAckNPrvSVH1/mXHD4hgtavWHS+pqkGzW8ASbncX5yiM3xCvAsOl/AZ/nNacxr0N6orwMCVzOTKrC56ejpCPjHEgC8X1p1Gym3ta8JPkGW5b90Q4LokziWFzVM6nBGmyJNSdpXNKqPtcQJU6HumWokE7saV47r5ko+bh6SI8fRCoVieLq1bkG+wWhL/94VlNwhRKUemFqRr6XFqihxU98EYC35eLC13L76hSgkaDNxCRHbyvlOYbDWvyyK24fad5wpEM/011RRs2V0qyZPZdFcWQIJ1nQR1dd8/vUkHwRTEjgVrpeHeF+E9bdnNVxWx3bxZ+SfY+FJlPmkG/F5fY2FxI9RR0KInaoELiAt+35eMuo2LZJ7I87GZjwvPlR3Ac6ETqg9iQ==
+        vpaprots@github/71233784 # ssh-import-id gh:vpaprots'
+      install-server: true
+    storage:
+      grub:
+        reorder_uefi: false
+      config:
+      - {ptable: gpt, path: /dev/nvme0n1, preserve: false, name: '', grub_device: false, type: disk, id: disk-nvme0n1, wipe: superblock, ssd: yes}
+      - {             path: /dev/sda,     preserve: false, name: '', grub_device: false, type: disk, id: disk-sda,     wipe: superblock}
+      - {device: disk-nvme0n1, size:  1127219200, wipe: superblock, flag: boot,  number: 1, preserve: false, grub_device: true,  type: partition, id: partition-efi}
+      - {device: disk-nvme0n1, size:  2147483648, wipe: superblock, flag: linux, number: 2, preserve: false, grub_device: false, type: partition, id: partition-boot}
+      - {device: disk-nvme0n1, size: 53687091200, wipe: superblock, flag: linux, number: 3, preserve: false, grub_device: false, type: partition, id: partition-wal}
+      - {device: disk-nvme0n1, size:          -1,                   flag: linux, number: 4, preserve: false, grub_device: false, type: partition, id: partition-lvm}
+      - name: vg-0
+        devices: [partition-lvm]
+        preserve: false
+        type: lvm_volgroup
+        id: partition-lvm0
+      - {name: lv-root, volgroup: partition-lvm0, size: 107374182400B, preserve: false, type: lvm_partition, id: partition-root}
+      - {fstype: fat32, volume: partition-efi,  preserve: false, type: format, id: format-efi}
+      - {fstype: ext4,  volume: partition-boot, preserve: false, type: format, id: format-boot}
+      - {fstype: ext4,  volume: partition-root, preserve: false, type: format, id: format-root}
+      - {device: format-root, path: /,         type: mount, id: mount-root}
+      - {device: format-boot, path: /boot,     type: mount, id: mount-boot}
+      - {device: format-efi,  path: /boot/efi, type: mount, id: mount-efi}
+
+    # ansible:
+    #   install-method: distro
+    #   pull:
+    #     url: "{{.Hostname}}/static"
+    #     playbook-name: ubuntu.yml
