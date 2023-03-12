@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"net"
 	"net/http"
 	"regexp"
@@ -13,13 +12,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func handleWOL(inventory map[string]string) func(http.ResponseWriter, *http.Request) {
+func handleWOL(inventory map[string]string, brdAddr string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		host := r.URL.Query().Get("h")
 		for macAddr, hostname := range inventory {
 			if host == "" || host == hostname {
 				log.Infof("Step 0: Sending WOL to %s", hostname)
-				err := wol.MagicWake(macAddr, "255.255.255.255")
+				err := wol.MagicWake(macAddr, brdAddr)
 				if err != nil {
 					log.Fatalf("Could not send WOL: %s", err.Error())
 				}
@@ -67,42 +66,6 @@ func cloudLogHandle() func(http.ResponseWriter, *http.Request) {
 		log.Infof("LOG %s: %+v", r.URL.String(), jsonMap)
 		appendLog(match[1], jsonMap)
 		fmt.Fprint(w, "OK\n\n")
-	}
-}
-
-var autoinstallHostname = regexp.MustCompile(`/autoinstall/(?P<Hostname>[a-z0-9]+)/user-data`)
-
-func cloudInitHandler(host string, httpPort int, userData, passwordHash string) func(http.ResponseWriter, *http.Request) {
-	tmpl, err := template.New("userdata.tmpl").Parse(userData)
-	if err != nil {
-		log.Fatalf("Could not create template: %s", err)
-	}
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/meta-data") {
-			fmt.Fprint(w, "\n\n")
-			return
-		}
-
-		match := autoinstallHostname.FindStringSubmatch(r.URL.Path)
-		if len(match) != 2 {
-			http.NotFound(w, r)
-			return
-		}
-
-		data := &templateFill{
-			Hostname:     match[1],
-			Server:       host,
-			HttpPort:     httpPort,
-			PasswordHash: passwordHash,
-		}
-		err := tmpl.Execute(w, data)
-		if err != nil {
-			log.Errorf("Error returning user-data: %s", err)
-		}
-
-		log.Infof("Sending user-data to %s", data.Hostname)
-		setCloudInitProgress(data.Hostname)
 	}
 }
 

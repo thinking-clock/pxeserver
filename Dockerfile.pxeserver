@@ -1,7 +1,5 @@
 # syntax=docker/dockerfile:1
 
-# Incomplete: does not work on MAC to broadcast wake-on-line packet
-# Did not test
 ## Build
 FROM golang AS build
 WORKDIR /app
@@ -11,21 +9,9 @@ RUN go mod download
 COPY *.go *.tmpl ./
 RUN go build -o /pxeserver
 
-FROM ubuntu:22.04 as staticserve
-WORKDIR /static
-RUN apt-get update && apt-get install -y wget syslinux-common genisoimage
-RUN wget https://releases.ubuntu.com/22.04.1/ubuntu-22.04.1-live-server-amd64.iso
-RUN echo "10f19c5b2b8d6db711582e0e27f5116296c34fe4b313ba45f9b201a5007056cb *ubuntu-22.04.1-live-server-amd64.iso" | sha256sum --check
-RUN isoinfo -i ubuntu-22.04.1-live-server-amd64.iso -x '/CASPER/INITRD.;1' > /static/efi64/initrd 
-RUN isoinfo -i ubuntu-22.04.1-live-server-amd64.iso -x '/CASPER/VMLINUZ.;1' > /static/efi64/vmlinuz
-RUN cp /usr/lib/syslinux/modules/efi64/ldlinux.e64 /usr/lib/syslinux/modules/efi64/syslinux.c32 /static/efi64
-
 ## Deploy
 FROM   ubuntu:22.04
-VOLUME ["/static"]
 COPY --from=build /pxeserver /pxeserver
-COPY --from=staticserve /static /static
-COPY config.yaml /etc/pxeserver/config.yaml
 EXPOSE 69
 EXPOSE 8080
 WORKDIR /

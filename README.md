@@ -35,7 +35,7 @@ WantedBy=multi-user.target
 - extract vmlinuz and initrd
 - install and copy bootloader
 - copy `config.yaml` to `/etc/pxeserver/config.yaml` and edit hostname and password
-- `GOOS=linux go build && scp pxeserver pi@pihole.papro.ca:.`, sudo cp ~pi/pxeserver/ /usr/bin/pxeserver`
+- `GOOS=linux go build && scp pxeserver pi@pihole:.`, sudo cp ~pi/pxeserver/ /usr/bin/pxeserver`
 - `sudo systemctl restart pxeserver`
 
 ## Reference

@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"net"
 	"net/http"
 	"sync"
 
@@ -106,15 +107,14 @@ var progressMax = progressRecord{
 
 type htmlFill struct {
 	Host        string
-	Port        int
+	Port        string
 	Inventory   map[string]string
 	Progress    map[string]*progressRecord
 	ProgressMax progressRecord
 }
 
-func statusPage(host string, httpPort int, inventory map[string]string) func(http.ResponseWriter, *http.Request) {
+func statusPage(host string, httpPort string, inventory map[string]string) func(http.ResponseWriter, *http.Request) {
 	tmpl, err := template.New("status.tmpl").Parse(statusHtml)
-	// tmpl, err := template.New("status.html.tmpl").ParseFiles("status.html.tmpl")
 	if err != nil {
 		log.Fatalf("Could not create template: %s", err)
 	}
@@ -123,10 +123,15 @@ func statusPage(host string, httpPort int, inventory map[string]string) func(htt
 		progress[hostname] = &progressRecord{}
 	}
 
+	_, port, err := net.SplitHostPort(httpPort)
+	if err != nil {
+		log.Fatalf("Could not parse address: %s", err)
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &htmlFill{
 			Host:        host,
-			Port:        httpPort,
+			Port:        port,
 			Inventory:   inventory,
 			Progress:    progress,
 			ProgressMax: progressMax,

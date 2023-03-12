@@ -28,7 +28,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
-        name: Build and push
+        name: Build and push pxeserver
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -39,7 +39,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       -
-        name: Build and push
+        name: Build and push aptcacher
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -49,4 +49,14 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
+      -
+        name: Build and push step-ca
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile.stepca
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/thinking-clock/stepca:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

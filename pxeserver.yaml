@@ -1,0 +1,13 @@
+serve:
+  host:      <host name>
+  http:      :80
+  https:     :443 
+  tftp:      :69
+  broadcast: 10.0.0.255
+  datadir:   /pxeserver/data
+acme:
+  root:    root.crt
+  ca-url:  https://ca:1234/acme/directory
+inventory:
+  12:23:45:56:78:93:	hogsmead1	 
+  12:23:45:56:78:9B:	hogsmead2	 

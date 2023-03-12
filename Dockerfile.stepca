@@ -1,0 +1,22 @@
+FROM golang AS builder
+RUN apt-get update && apt-get install -y git libpcsclite-dev gcc make pkg-config
+WORKDIR /src
+RUN wget https://github.com/smallstep/certificates/archive/refs/tags/v0.22.1.tar.gz && \
+    tar xvzf v0.22.1.tar.gz && \
+    mv /src/certificates-0.22.1 /src/certificates && \
+    cd /src/certificates && \
+    make V=1 GOFLAGS="" build
+
+FROM ubuntu:22.04
+RUN apt update && apt install -y yubikey-manager cron
+COPY --from=builder /src/certificates/bin/step-ca /usr/local/bin/step-ca
+COPY --from=builder /src/certificates/bin/step-yubikey-init /usr/local/bin/step-yubikey-init
+COPY --from=smallstep/step-cli:latest /usr/local/bin/step /usr/local/bin/step
+COPY stepentry.sh /entrypoint.sh
+
+ENV TZ=America/Toronto
+ENV CONFIGPATH="/etc/step/ca.json"
+
+STOPSIGNAL SIGTERM
+ENTRYPOINT ["/entrypoint.sh"]
+CMD exec /usr/local/bin/step-ca $CONFIGPATH
